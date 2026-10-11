@@ -3,10 +3,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, useAnimation, useInView, Variants } from "framer-motion";
+import { motion, useAnimation, useInView, useReducedMotion, Variants } from "framer-motion";
 import { TypeAnimation } from 'react-type-animation';
 import { FaReact, FaNodeJs, } from "react-icons/fa";
 import { SiJavascript, SiNextdotjs,SiMongodb, SiTypescript } from "react-icons/si";
+
+/* Heading titles that rotate every 3 seconds. */
+const HERO_TITLES = ["MERN-Stack", "Frontend"] as const;
+const HERO_TITLE_INTERVAL = 2000;
 
 
 export default function Hero() {
@@ -15,12 +19,23 @@ export default function Hero() {
     const isInView = useInView(ref, { once: true });
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isHovering, setIsHovering] = useState(false);
+    const prefersReducedMotion = useReducedMotion();
+    const [titleIndex, setTitleIndex] = useState(0);
 
     useEffect(() => {
         if (isInView) {
             controls.start("visible");
         }
     }, [controls, isInView]);
+
+    /* Alternate the heading title every 3 seconds. */
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTitleIndex((prev) => (prev + 1) % HERO_TITLES.length);
+        }, HERO_TITLE_INTERVAL);
+
+        return () => clearInterval(interval);
+    }, []);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -180,7 +195,27 @@ const floatingIcons = [
                             variants={itemVariants}
                             className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight"
                         >
-                            Front-end
+                            
+                            <span className="inline-grid align-baseline">
+                                {HERO_TITLES.map((title, index) => (
+                                    <motion.span
+                                        key={title}
+                                        className="col-start-1 row-start-1"
+                                        initial={false}
+                                        animate={{
+                                            opacity: index === titleIndex ? 1 : 0,
+                                            y: index === titleIndex ? 0 : prefersReducedMotion ? 0 : 10,
+                                        }}
+                                        transition={{
+                                            duration: prefersReducedMotion ? 0 : 0.5,
+                                            ease: "easeOut",
+                                        }}
+                                        aria-hidden={index === titleIndex ? undefined : "true"}
+                                    >
+                                        {title}
+                                    </motion.span>
+                                ))}
+                            </span>
                             <br />
                             <span className="bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent bg-300% animate-gradient">
                                 Developer

@@ -3,30 +3,34 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { FaCode, FaPaintBrush } from "react-icons/fa";
-import { SiWix } from "react-icons/si";
+import { FaCode, FaKey, FaPaintBrush } from "react-icons/fa";
+import { SiJsonwebtokens, SiSwagger, SiWix } from "react-icons/si";
 import type { IconType } from "react-icons";
 
-type FilterId = "all" | "frontend" | "backend" | "tools" | "design";
+type FilterId = "all" | "frontend" | "backend" | "database" | "tools" | "design";
 
 const FILTERS: { id: FilterId; label: string }[] = [
     { id: "all", label: "All" },
     { id: "frontend", label: "Frontend" },
     { id: "backend", label: "Backend" },
+    { id: "database", label: "Database" },
     { id: "tools", label: "Tools & Platforms" },
     { id: "design", label: "Design & CMS" },
 ];
 
-/* Either an <img> source or a react-icons component. */
+/* Either an <img> source or a react-icons component.
+   mono: the source SVG is pure black and would be invisible on the dark
+   card, so it is recoloured to white via the skill-icon--mono filter. */
 type Skill = {
     name: string;
     category: Exclude<FilterId, "all">;
     icon?: string;
     Icon?: IconType;
+    mono?: boolean;
 };
 
 /* Skills grouped by category in display order:
-   Frontend, Backend, Tools & Platforms, Design & CMS.
+   Frontend, Backend, Database, Tools & Platforms, Design & CMS.
    Relative order within each category is preserved. */
 const skills: Skill[] = [
     { name: "HTML5", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg", category: "frontend" },
@@ -36,12 +40,16 @@ const skills: Skill[] = [
     { name: "React", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", category: "frontend" },
     { name: "Next.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg", category: "frontend" },
     { name: "TypeScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg", category: "frontend" },
-    { name: "Firebase", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg", category: "backend" },
-    { name: "MongoDB", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", category: "backend" },
     { name: "Node.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", category: "backend" },
-    { name: "Express.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", category: "backend" },
+    { name: "Express.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", category: "backend", mono: true },
+    { name: "REST API", Icon: SiSwagger, category: "backend" },
+    { name: "JWT Authentication", Icon: SiJsonwebtokens, category: "backend" },
+    { name: "NextAuth.js", Icon: FaKey, category: "backend" },
+    { name: "Firebase", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg", category: "backend" },
+    { name: "MongoDB", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", category: "database" },
+    { name: "Mongoose", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongoose/mongoose-original.svg", category: "database" },
     { name: "Git", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg", category: "tools" },
-    { name: "GitHub", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg", category: "tools" },
+    { name: "GitHub", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg", category: "tools", mono: true },
     { name: "Postman", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg", category: "tools" },
     { name: "Figma", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg", category: "design" },
     { name: "Adobe Illustrator", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-original.svg", category: "design" },
@@ -196,7 +204,7 @@ export default function Skills() {
                     <div className="skills-grid">
                         {visibleSkills.map((skill) => (
                             <div className="slide" key={skill.name}>
-                                <div className="skill-icon">
+                                <div className={skill.mono ? "skill-icon skill-icon--mono" : "skill-icon"}>
                                     {skill.Icon ? (
                                         <skill.Icon
                                             className="skill-glyph"

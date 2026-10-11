@@ -380,15 +380,18 @@ body {
   color: #ffffff;
 }
 
+/* Pure-black source SVGs (GitHub, Express.js) are invisible on the dark
+   card. These are remote <img> files, so `color` cannot reach inside them;
+   inverting the black artwork renders it white without altering the shape. */
+.slide .skill-icon--mono > img {
+  filter: invert(1) grayscale(1) brightness(2);
+}
+
 .slide p {
   font-weight: 600;
   font-size: 14px;
   text-align: center;
   margin: 0;
-  color: black;
-}
-
-.dark .slide p {
   color: #ffffff;
 }
 
