@@ -2,31 +2,106 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { FaCode, FaPaintBrush } from "react-icons/fa";
+import { SiWix } from "react-icons/si";
+import type { IconType } from "react-icons";
+
+type FilterId = "all" | "frontend" | "backend" | "tools" | "design";
+
+const FILTERS: { id: FilterId; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "frontend", label: "Frontend" },
+    { id: "backend", label: "Backend" },
+    { id: "tools", label: "Tools & Platforms" },
+    { id: "design", label: "Design & CMS" },
+];
+
+/* Either an <img> source or a react-icons component. */
+type Skill = {
+    name: string;
+    category: Exclude<FilterId, "all">;
+    icon?: string;
+    Icon?: IconType;
+};
+
+/* Skills grouped by category in display order:
+   Frontend, Backend, Tools & Platforms, Design & CMS.
+   Relative order within each category is preserved. */
+const skills: Skill[] = [
+    { name: "HTML5", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg", category: "frontend" },
+    { name: "CSS3", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg", category: "frontend" },
+    { name: "Tailwind CSS", icon: "/images-depositphotos-bgremover.png", category: "frontend" },
+    { name: "JavaScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg", category: "frontend" },
+    { name: "React", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", category: "frontend" },
+    { name: "Next.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg", category: "frontend" },
+    { name: "TypeScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg", category: "frontend" },
+    { name: "Firebase", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg", category: "backend" },
+    { name: "MongoDB", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg", category: "backend" },
+    { name: "Node.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", category: "backend" },
+    { name: "Express.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg", category: "backend" },
+    { name: "Git", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg", category: "tools" },
+    { name: "GitHub", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg", category: "tools" },
+    { name: "Postman", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg", category: "tools" },
+    { name: "Figma", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg", category: "design" },
+    { name: "Adobe Illustrator", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-original.svg", category: "design" },
+    { name: "Adobe Photoshop", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-original.svg", category: "design" },
+    { name: "Pixco", Icon: FaPaintBrush, category: "design" },
+    { name: "Wix Studio", Icon: SiWix, category: "design" },
+    { name: "Wix Velo", Icon: FaCode, category: "design" },
+];
+
+const TOTAL_SKILLS = skills.length;
 
 export default function Skills() {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, amount: 0.1 });
 
-    const skills = [
-        { name: "Firebase", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg" },
-        { name: "MongoDB", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg" },
-        { name: "Node.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" },
-        { name: "Express.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" },
-        { name: "Git", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" },
-        { name: "GitHub", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" },
-        { name: "HTML5", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" },
-        { name: "CSS3", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" },
-        { name: "Tailwind CSS", icon: "/images-depositphotos-bgremover.png" },
-        { name: "JavaScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" },
-        { name: "React", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" },
-        { name: "Next.js", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" },
-        { name: "TypeScript", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" },
-        { name: "Figma", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" },
-        { name: "Adobe Illustrator", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-original.svg" },
-    ];
+    const [activeFilter, setActiveFilter] = useState<FilterId>("all");
+    const [hasInteracted, setHasInteracted] = useState(false);
 
-    const loopedSkills = [...skills, ...skills, ...skills];
+    const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    /* Each skill renders exactly once - no repeated/looped entries. */
+    const visibleSkills =
+        activeFilter === "all"
+            ? skills
+            : skills.filter((skill) => skill.category === activeFilter);
+
+    const activeLabel = FILTERS.find((f) => f.id === activeFilter)?.label ?? "All";
+
+    const selectFilter = (id: FilterId) => {
+        setHasInteracted(true);
+        setActiveFilter(id);
+    };
+
+    /* Arrow / Home / End navigation between filter buttons. */
+    const onFilterKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+        const lastIndex = FILTERS.length - 1;
+        let nextIndex: number | null = null;
+
+        switch (event.key) {
+            case "ArrowRight":
+            case "ArrowDown":
+                nextIndex = index === lastIndex ? 0 : index + 1;
+                break;
+            case "ArrowLeft":
+            case "ArrowUp":
+                nextIndex = index === 0 ? lastIndex : index - 1;
+                break;
+            case "Home":
+                nextIndex = 0;
+                break;
+            case "End":
+                nextIndex = lastIndex;
+                break;
+            default:
+                return;
+        }
+
+        event.preventDefault();
+        buttonRefs.current[nextIndex]?.focus();
+    };
 
     return (
         <section 
@@ -77,169 +152,94 @@ export default function Skills() {
                     </p>
                 </motion.div>
 
-
-
-                {/* Skills Slider */}
-                <div className="relative">
-                    {/* Gradient Overlays */}
-                    <div className="absolute left-0 top-0 w-16 md:w-24 h-full bg-gradient-to-r from-[#0D1117] to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute right-0 top-0 w-16 md:w-24 h-full bg-gradient-to-l from-[#0D1117] to-transparent z-10 pointer-events-none"></div>
-
-                    <div className="slider overflow-hidden py-4">
-                        <div className="slide-track">
-                            {loopedSkills.map((skill, index) => (
-                                <div className="slide" key={`${skill.name}-${index}`}>
-                                    <div className="skill-card">
-                                        <div className="skill-icon">
-                                            <img 
-                                                src={skill.icon} 
-                                                alt={skill.name}
-                                                className="w-full h-full object-contain mx-auto"
-                                            />
-                                        </div>
-                                        <p className="skill-name text-white">{skill.name}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                {/* Filter Controls */}
+                <motion.div
+                    className="flex justify-center mb-10 sm:mb-12"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    transition={{ delay: 0.35, duration: 0.6 }}
+                >
+                    <div
+                        className="skills-filter-bar"
+                        role="group"
+                        aria-label="Filter skills by category"
+                    >
+                        {FILTERS.map((filter, index) => (
+                            <button
+                                key={filter.id}
+                                type="button"
+                                ref={(node) => {
+                                    buttonRefs.current[index] = node;
+                                }}
+                                className="skills-filter-btn"
+                                aria-pressed={activeFilter === filter.id}
+                                onClick={() => selectFilter(filter.id)}
+                                onKeyDown={(event) => onFilterKeyDown(event, index)}
+                            >
+                                {filter.label}
+                            </button>
+                        ))}
                     </div>
-                </div>
+                </motion.div>
+
+                <p className="sr-only" aria-live="polite">
+                    Showing {visibleSkills.length} of {TOTAL_SKILLS} skills: {activeLabel}
+                </p>
+
+                {/* Skills Grid (static, no auto-scroll) */}
+                <motion.div
+                    key={activeFilter}
+                    initial={hasInteracted ? { opacity: 0, y: 12 } : false}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                >
+                    <div className="skills-grid">
+                        {visibleSkills.map((skill) => (
+                            <div className="slide" key={skill.name}>
+                                <div className="skill-icon">
+                                    {skill.Icon ? (
+                                        <skill.Icon
+                                            className="skill-glyph"
+                                            role="img"
+                                            aria-label={skill.name}
+                                        />
+                                    ) : (
+                                        <img 
+                                            src={skill.icon} 
+                                            alt={skill.name}
+                                            className="w-full h-full object-contain mx-auto"
+                                        />
+                                    )}
+                                </div>
+                                <p className="skill-name text-white">{skill.name}</p>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
 
             </div>
 
             <style jsx>{`
-                .slider {
-                    width: 100%;
-                    overflow: hidden;
-                    position: relative;
-                }
-
-                .slide-track {
-                    display: flex;
-                    gap: 1.5rem;
-                    animation: scroll 40s linear infinite;
-                    width: max-content;
-                    padding: 0.5rem 0;
-                }
-
-                .slide {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 0.5rem;
-                    flex-shrink: 0;
-                }
-
-                .skill-card {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.75rem;
-                    padding: 1.25rem 1rem;
-                    background: rgba(22, 27, 34, 0.6);
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.06);
-                    border-radius: 1rem;
-                    width: 120px;
-                    height: 130px;
-                    transition: all 0.3s ease;
-                    cursor: default;
-                }
-
-                .skill-card:hover {
-                    border-color: rgba(244, 130, 103, 0.3);
-                    background: rgba(22, 27, 34, 0.8);
-                    transform: translateY(-4px);
-                    box-shadow: 0 8px 30px rgba(244, 130, 103, 0.08);
-                }
-
                 .skill-icon {
-                    width: 48px;
-                    height: 48px;
+                    width: 45px;
+                    height: 45px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    transition: all 0.3s ease;
-                    flex-shrink: 0;
+                    margin-bottom: 10px;
                 }
 
-                .skill-card:hover .skill-icon {
-                    transform: translateY(-8px);
+                .skill-glyph {
+                    width: 100%;
+                    height: 100%;
+                    color: #ffffff;
                 }
 
                 .skill-name {
-                    font-size: 0.75rem;
-                    font-weight: 500;
-                    color: #9CA3AF;
+                    font-weight: 600;
+                    font-size: 14px;
                     text-align: center;
-                    transition: color 0.3s ease;
-                    white-space: nowrap;
-                    max-width: 100%;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                .skill-card:hover .skill-name {
-                    color: #FFFFFF;
-                }
-
-                @keyframes scroll {
-                    0% {
-                        transform: translateX(0);
-                    }
-                    100% {
-                        transform: translateX(calc(-33.33%));
-                    }
-                }
-
-                /* Pause animation on hover */
-                .slider:hover .slide-track {
-                    animation-play-state: paused;
-                }
-
-                @media (max-width: 640px) {
-                    .slide-track {
-                        gap: 1rem;
-                        animation-duration: 30s;
-                    }
-                    
-                    .skill-card {
-                        padding: 1rem 0.75rem;
-                        width: 90px;
-                        height: 100px;
-                    }
-
-                    .skill-icon {
-                        width: 36px;
-                        height: 36px;
-                    }
-
-                    .skill-name {
-                        font-size: 0.6rem;
-                    }
-                }
-
-                @media (min-width: 641px) and (max-width: 1024px) {
-                    .skill-card {
-                        width: 105px;
-                        height: 115px;
-                        padding: 1.1rem 0.85rem;
-                    }
-
-                    .skill-icon {
-                        width: 42px;
-                        height: 42px;
-                    }
-                }
-
-                /* Hide scrollbar */
-                .slider::-webkit-scrollbar {
-                    display: none;
-                }
-                .slider {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
+                    margin: 0;
                 }
             `}</style>
         </section>
